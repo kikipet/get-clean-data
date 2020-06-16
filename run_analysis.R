@@ -9,7 +9,7 @@
 # Appropriately labels the data set with descriptive variable names.
 # From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
 
-wd <- "/home/skim52/coursera/getclean/UCI HAR Dataset/"
+wd <- "/home/skim52/coursera/get-clean-data/UCI HAR Dataset/"
 train <- read.table(paste(wd, "train/X_train.txt", sep=""))
 test <- read.table(paste(wd, "test/X_test.txt", sep=""))
 merged <- rbind(train, test)
@@ -30,6 +30,7 @@ mergeS <- rbind(trainS, testS)
 names(mergeS) <- "Subject"
 
 merged2 <- cbind(meansd, mergeL, mergeS)
+merged2$Activity <- ordered(merged2$Activity, levels = c(1,2,3,4,5,6), labels = c("Walking", "Walking.Upstairs", "Walking.Downstairs", "Sitting", "Standing", "Laying"))
 activity <- data.frame()
 for (v in 1:66) {
   tmp <- data.frame(tapply(merged2[,v], merged2$Activity, mean))
@@ -41,6 +42,7 @@ for (v in 1:66) {
     activity <- cbind(activity, tmp)
   }
 }
+row.names(activity) <- c("Walking", "Walking.Upstairs", "Walking.Downstairs", "Sitting", "Standing", "Laying")
 subject <- data.frame()
 for (v in 1:66) {
   tmp <- data.frame(tapply(merged2[,v], merged2$Subject, mean))
@@ -52,3 +54,6 @@ for (v in 1:66) {
     subject <- cbind(subject, tmp)
   }
 }
+write.table(merged2, file = paste(wd, "../mean-sd.txt", sep=""), sep = " ", row.names = FALSE, col.names = TRUE)
+write.table(activity, file = paste(wd, "../mean_activity.txt", sep=""), sep = " ", row.names = TRUE, col.names = TRUE)
+write.table(subject, file = paste(wd, "../mean_subject.txt", sep=""), sep = " ", row.names = FALSE, col.names = TRUE)

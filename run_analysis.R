@@ -25,6 +25,8 @@ meansd <- merged[, keep]
 # label the dataset
 namedf <- read.table(paste(wd, "features.txt", sep=""))
 names(meansd) <- namedf[keep, 2]
+# remove special characters
+names(meansd) <- gsub("[^[:alnum:]]", "", names(meansd))
 
 # label for activity ID
 trainL <- read.table(paste(wd, "train/y_train.txt", sep=""))
@@ -40,36 +42,53 @@ names(mergeS) <- "Subject"
 
 # combine data for mean/SD with activity and subject labels
 merged2 <- cbind(meansd, mergeL, mergeS)
+
+# find averages
+merged3 <- data.frame(matrix(,nrow=0, ncol=dim(merged2)[2]))
+names(merged3) <- names(merged2)
+
+for (a in unique(merged2$Activity)) {
+  for (b in unique(merged2$Subject)) {
+    tmp <- subset(merged2, Activity==a & Subject==b)
+    tmp1 <- tmp[1,]
+    for (i in 2:dim(tmp)[1]) {
+      tmp1 <- tmp1 + tmp[i,]
+    }
+    tmp1 <- tmp1 / dim(tmp)[1]
+    merged3 <- rbind(merged3, tmp1)
+  }
+}
+
 # give the activities better labels
-merged2$Activity <- ordered(merged2$Activity, levels = c(1,2,3,4,5,6), labels = c("Walking", "Walking.Upstairs", "Walking.Downstairs", "Sitting", "Standing", "Laying"))
+merged3$Activity <- ordered(merged3$Activity, levels = c(1,2,3,4,5,6), labels = c("Walking", "WalkingUpstairs", "WalkingDownstairs", "Sitting", "Standing", "Laying"))
 
 # create separate data frames to use for exporting data files later
-activity <- data.frame()
-for (v in 1:66) {
-  tmp <- data.frame(tapply(merged2[,v], merged2$Activity, mean))
-  names(tmp) <- names(merged2)[v]
-  if (nrow(activity) == 0) {
-    activity <- tmp
-  }
-  else {
-    activity <- cbind(activity, tmp)
-  }
-}
-row.names(activity) <- c("Walking", "Walking.Upstairs", "Walking.Downstairs", "Sitting", "Standing", "Laying")
+# activity <- data.frame()
+# for (v in 1:66) {
+#   tmp <- data.frame(tapply(merged2[,v], merged2$Activity, mean))
+#   names(tmp) <- names(merged2)[v]
+#   if (nrow(activity) == 0) {
+#     activity <- tmp
+#   }
+#   else {
+#     activity <- cbind(activity, tmp)
+#   }
+# }
+# row.names(activity) <- c("Walking", "WalkingUpstairs", "WalkingDownstairs", "Sitting", "Standing", "Laying")
 
-subject <- data.frame()
-for (v in 1:66) {
-  tmp <- data.frame(tapply(merged2[,v], merged2$Subject, mean))
-  names(tmp) <- names(merged2)[v]
-  if (nrow(subject) == 0) {
-    subject <- tmp
-  }
-  else {
-    subject <- cbind(subject, tmp)
-  }
-}
+# subject <- data.frame()
+# for (v in 1:66) {
+#   tmp <- data.frame(tapply(merged2[,v], merged2$Subject, mean))
+#   names(tmp) <- names(merged2)[v]
+#   if (nrow(subject) == 0) {
+#     subject <- tmp
+#   }
+#   else {
+#     subject <- cbind(subject, tmp)
+#   }
+# }
 
 # write txt files with data
-write.table(merged2, file = paste(wd, "../mean-sd.txt", sep=""), sep = " ", row.names = FALSE, col.names = TRUE)
-write.table(activity, file = paste(wd, "../mean_activity.txt", sep=""), sep = " ", row.names = TRUE, col.names = TRUE)
-write.table(subject, file = paste(wd, "../mean_subject.txt", sep=""), sep = " ", row.names = FALSE, col.names = TRUE)
+write.table(merged3, file = paste(wd, "../mean-sd.txt", sep=""), sep = " ", row.names = FALSE, col.names = FALSE)
+# write.table(activity, file = paste(wd, "../mean_activity.txt", sep=""), sep = " ", row.names = FALSE, col.names = FALSE)
+# write.table(subject, file = paste(wd, "../mean_subject.txt", sep=""), sep = " ", row.names = FALSE, col.names = FALSE)
